@@ -8,28 +8,25 @@ textArea.addEventListener("input", verifyTextLength);
 submitButton.addEventListener("click", submitData);
 
 function verifyTextLength(e) {
- // The e.target property gives us the HTML element that triggered the event, which in this case is the textarea. We save this to a variable called 'textarea'
   const textarea = e.target;
 
-  // Verify the TextArea value.
+  // Enable or disable the submit button based on text length
   if (textarea.value.length > 200 && textarea.value.length < 100000) {
-    // Enable the button when text area has value.
     submitButton.disabled = false;
   } else {
-    // Disable the button when text area is empty.
     submitButton.disabled = true;
   }
 }
 
 function submitData(e) {
-
- // This is used to add animation to the submit button
+  // Add loading animation to the submit button
   submitButton.classList.add("submit-button--loading");
 
   const text_to_summarize = textArea.value;
-  var myHeaders = new Headers();
+  const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
-  var raw = JSON.stringify({
+
+  const raw = JSON.stringify({
     "text_to_summarize": text_to_summarize
   });
 
@@ -41,21 +38,25 @@ function submitData(e) {
   };
 
   // Send the text to the server using fetch API
+  fetch('https://ai-summarizer-1.onrender.com/summarize', requestOptions)
+    .then(response => {
+      console.log("Response received from server:", response);
+      return response.json(); // Assuming the response is JSON
+    })
+    .then(data => {
+      // Assuming the response contains 'summary' field
+      if (data.summary) {
+        summarizedTextArea.value = data.summary;
+      } else {
+        summarizedTextArea.value = "No summary returned.";
+      }
 
-    // Note - here we can omit the “baseUrl” we needed in Postman and just use a relative path to “/summarize” because we will be calling the API from our Replit!  
-    fetch('https://ai-summarizer-1.onrender.com/summarize', requestOptions)
-      .then(response => response.text()) // Response will be summarized text
-      .then(summary => {
-        // Do something with the summary response from the back end API!
-
-        // Update the output text area with new summary
-        summarizedTextArea.value = summary;
-
-        // Stop the spinning loading animation
-        submitButton.classList.remove("submit-button--loading");
-
-      })
-      .catch(error => {
-        console.log(error.message);
-      });
-  }
+      // Stop the loading animation
+      submitButton.classList.remove("submit-button--loading");
+    })
+    .catch(error => {
+      console.log("Error:", error);
+      // Stop the loading animation
+      submitButton.classList.remove("submit-button--loading");
+    });
+}
